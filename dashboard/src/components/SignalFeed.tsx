@@ -45,6 +45,8 @@ export default function SignalFeed({ news, groupedNews, topics }: Props) {
   const [optimizations, setOptimizations] = useState<Optimization[]>([])
   const [showOptimizations, setShowOptimizations] = useState(false)
   const [applyingId, setApplyingId] = useState<string | null>(null)
+  const [selectedTopic, setSelectedTopic] = useState<string>('all')
+  const [applyError, setApplyError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOptimizations()
@@ -60,16 +62,19 @@ export default function SignalFeed({ news, groupedNews, topics }: Props) {
 
   async function applyOptimization(opt: Optimization) {
     setApplyingId(opt.id)
+    setApplyError(null)
     try {
       if (opt.type === 'remove' && opt.resource_id) {
-        await supabase.from('resources').delete().eq('id', opt.resource_id)
+        const { error } = await supabase.from('resources').delete().eq('id', opt.resource_id)
+        if (error) { setApplyError(`Failed to remove: ${error.message}`); return }
       } else if (opt.type === 'add') {
-        await supabase.from('resources').insert({
+        const { error } = await supabase.from('resources').insert({
           topic_id: opt.topic_id,
           title: opt.title,
           url: opt.url || null,
           description: opt.reason || null,
         })
+        if (error) { setApplyError(`Failed to add: ${error.message}`); return }
       }
       await supabase.from('resource_optimizations').delete().eq('id', opt.id)
       await fetchOptimizations()
@@ -166,9 +171,16 @@ export default function SignalFeed({ news, groupedNews, topics }: Props) {
         {/* Card header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
           <div className="flex items-center gap-2">
-            <p className="text-[9px] font-semibold tracking-[0.24em] text-zinc-500 uppercase">
-              Insights
-            </p>
+            <select
+              value={selectedTopic}
+              onChange={e => setSelectedTopic(e.target.value)}
+              className="text-[9px] font-semibold tracking-[0.24em] text-zinc-500 uppercase bg-transparent border-none outline-none cursor-pointer appearance-none hover:text-zinc-300 transition-colors"
+            >
+              <option value="all">Insights</option>
+              {Object.keys(groupedNews).map(topic => (
+                <option key={topic} value={topic}>{topic}</option>
+              ))}
+            </select>
             {optimizations.length > 0 && (
               <button
                 onClick={() => setShowOptimizations(true)}
@@ -190,7 +202,7 @@ export default function SignalFeed({ news, groupedNews, topics }: Props) {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04]">
-            {Object.entries(groupedNews).map(([topicName, items]) => (
+            {Object.entries(groupedNews).filter(([topicName]) => selectedTopic === 'all' || topicName === selectedTopic).map(([topicName, items]) => (
               <div key={topicName} className="px-6 py-5">
                 <div className="group/topic flex items-center gap-2 mb-4">
                   <p className="text-[9px] font-semibold tracking-[0.22em] text-zinc-400 uppercase">
@@ -247,6 +259,7 @@ export default function SignalFeed({ news, groupedNews, topics }: Props) {
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800/60 shrink-0">
               <div className="flex items-center gap-2">
                 <p className="text-[9px] font-semibold tracking-[0.22em] text-zinc-500 uppercase">Resource Optimization</p>
+                {applyError && <p className="text-[10px] text-red-400">{applyError}</p>}
                 <span className="text-[9px] text-zinc-700">{optimizations.length} suggestion{optimizations.length > 1 ? 's' : ''}</span>
               </div>
               <button onClick={() => setShowOptimizations(false)} className="p-1 text-zinc-600 hover:text-zinc-300 transition-colors">
