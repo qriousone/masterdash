@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Topic, NewsItem } from '@/types/insights'
 import { ExternalLink, BookOpen, Newspaper } from 'lucide-react'
+import { Suspense } from 'react'
+import DateFilter from '@/components/DateFilter'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,13 +18,17 @@ async function getInsights(): Promise<Topic[]> {
   return data ?? []
 }
 
-async function getNews(): Promise<NewsItem[]> {
-  const { data, error } = await supabase
+async function getNews(date?: string): Promise<NewsItem[]> {
+  let query = supabase
     .from('news')
     .select('*, topics(name)')
     .order('published_date', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(50)
+
+  if (date) query = query.eq('published_date', date)
+
+  const { data, error } = await query
   if (error) throw new Error(error.message)
   return data ?? []
 }
@@ -40,24 +46,29 @@ function getDate() {
   })
 }
 
-function groupNewsByDate(news: NewsItem[]) {
+function groupNewsByTopic(news: NewsItem[]) {
   return news.reduce((acc, item) => {
-    const date = item.published_date
-    if (!acc[date]) acc[date] = []
-    acc[date].push(item)
+    const topic = item.topics?.name ?? 'Uncategorized'
+    if (!acc[topic]) acc[topic] = []
+    acc[topic].push(item)
     return acc
   }, {} as Record<string, NewsItem[]>)
 }
 
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    month: 'short', day: 'numeric', year: 'numeric'
   })
 }
 
-export default async function HomePage() {
-  const [topics, news] = await Promise.all([getInsights(), getNews()])
-  const groupedNews = groupNewsByDate(news)
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>
+}) {
+  const { date } = await searchParams
+  const [topics, news] = await Promise.all([getInsights(), getNews(date)])
+  const groupedNews = groupNewsByTopic(news)
 
   return (
     <div className="min-h-full flex flex-col">
@@ -87,12 +98,17 @@ export default async function HomePage() {
 
         {/* News Feed */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <Newspaper className="w-4 h-4 text-zinc-400" />
-            <div>
-              <h2 className="text-sm font-semibold tracking-wide uppercase text-zinc-300">News Feed</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">Latest highlights from tracked sources</p>
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <Newspaper className="w-4 h-4 text-zinc-400" />
+              <div>
+                <h2 className="text-sm font-semibold tracking-wide uppercase text-zinc-300">News Feed</h2>
+                <p className="text-xs text-zinc-500 mt-0.5">Latest highlights from tracked sources</p>
+              </div>
             </div>
+            <Suspense fallback={null}>
+              <DateFilter />
+            </Suspense>
           </div>
 
           {news.length === 0 ? (
@@ -102,48 +118,39 @@ export default async function HomePage() {
               <p className="text-xs mt-1">Ask Claude to pull highlights from your sources.</p>
             </div>
           ) : (
-            <div className="space-y-8">
-              {Object.entries(groupedNews).map(([date, items]) => (
-                <div key={date}>
-                  <p className="text-xs font-semibold text-amber-500 uppercase tracking-widest mb-3">
-                    {formatDate(date)}
-                  </p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {Object.entries(groupedNews).map(([topic, items]) => (
+                <div key={topic} className="bg-zinc-950 border border-zinc-800 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-semibold text-amber-500 uppercase tracking-widest">{topic}</p>
+                    <span className="text-[10px] text-zinc-600">{items.length} items</span>
+                  </div>
                   <div className="space-y-3">
                     {items.map((item) => (
-                      <div key={item.id} className="flex gap-4 p-3 bg-zinc-950 rounded-lg border border-zinc-800">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              {item.url ? (
-                                <a
-                                  href={item.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm font-medium text-white hover:text-blue-400 flex items-center gap-1"
-                                >
-                                  {item.title}
-                                  <ExternalLink className="w-3 h-3 shrink-0 opacity-50" />
-                                </a>
-                              ) : (
-                                <p className="text-sm font-medium text-white">{item.title}</p>
-                              )}
-                              {item.summary && (
-                                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{item.summary}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 mt-2">
-                            {item.source && (
-                              <span className="text-[10px] text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
-                                {item.source}
-                              </span>
-                            )}
-                            {item.topics?.name && (
-                              <span className="text-[10px] text-zinc-600 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded-full">
-                                {item.topics.name}
-                              </span>
-                            )}
-                          </div>
+                      <div key={item.id} className="border-t border-zinc-800 pt-3 first:border-0 first:pt-0">
+                        {item.url ? (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium text-white hover:text-blue-400 flex items-start gap-1"
+                          >
+                            {item.title}
+                            <ExternalLink className="w-3 h-3 shrink-0 mt-0.5 opacity-50" />
+                          </a>
+                        ) : (
+                          <p className="text-sm font-medium text-white">{item.title}</p>
+                        )}
+                        {item.summary && (
+                          <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{item.summary}</p>
+                        )}
+                        <div className="flex items-center gap-2 mt-1.5">
+                          {item.source && (
+                            <span className="text-[10px] text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
+                              {item.source}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-zinc-600">{formatDate(item.published_date)}</span>
                         </div>
                       </div>
                     ))}
