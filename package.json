@@ -1,0 +1,12 @@
+{
+  "name": "master-dash",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix dashboard\" \"npm run dev --prefix mcp-server\"",
+    "dashboard": "npm run dev --prefix dashboard",
+    "mcp": "npm run dev --prefix mcp-server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
