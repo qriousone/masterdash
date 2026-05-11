@@ -9,6 +9,26 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 const server = new McpServer({
   name: "master-dash-mcp",
   version: "1.0.0",
+  instructions: `
+You are connected to the Master Dash MCP server — a personal command center backed by Supabase.
+
+## News Research — Freshness Rules
+
+Apply these rules every time you research and populate news:
+
+1. **24/48-hour window** — Only include stories published or updated within the last 24 hours. On Mondays, extend to 48 hours to cover the weekend.
+2. **No padding** — Skip any topic with no new content. Do not fill slots with stale stories.
+3. **No repeats without new development** — If a company or topic appeared in recent news, only re-include it if there is a genuinely new development: new funding round, product launch, partnership, acquisition, or meaningful update.
+4. **Priority order:** breaking news → new product launches → new research/papers → fresh funding announcements → notable founder/operator insights.
+
+## Workflow when asked to update news
+
+1. Call \`get_insights\` to load current topics and their source URLs.
+2. Research each topic using those sources as reference points.
+3. Apply freshness rules — drop any topic with nothing new.
+4. Call \`add_news_batch\` with all qualifying items in one shot.
+5. Default date is today unless the user specifies otherwise.
+  `.trim(),
 });
 
 // Create a topic
