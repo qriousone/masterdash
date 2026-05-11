@@ -119,5 +119,90 @@ server.tool(
   }
 );
 
+// Add a news item
+server.tool(
+  "add_news",
+  {
+    topic_id: z.string().describe("The topic ID this news belongs to"),
+    title: z.string().describe("Headline of the news item"),
+    summary: z.string().optional().describe("Short summary of the news"),
+    url: z.string().url().optional().describe("Link to the full article"),
+    source: z.string().optional().describe("Source name e.g. 'TechCrunch'"),
+    published_date: z.string().optional().describe("Date in YYYY-MM-DD format, defaults to today"),
+  },
+  async ({ topic_id, title, summary, url, source, published_date }) => {
+    const { data, error } = await supabase
+      .from("news")
+      .insert({ topic_id, title, summary, url, source, published_date })
+      .select()
+      .single();
+
+    if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+
+    return {
+      content: [{ type: "text", text: `News added: "${data.title}" (${data.published_date})` }],
+    };
+  }
+);
+
+// Add multiple news items at once
+server.tool(
+  "add_news_batch",
+  {
+    items: z.array(z.object({
+      topic_id: z.string(),
+      title: z.string(),
+      summary: z.string().optional(),
+      url: z.string().url().optional(),
+      source: z.string().optional(),
+      published_date: z.string().optional(),
+    })).describe("List of news items to add"),
+  },
+  async ({ items }) => {
+    const { error } = await supabase.from("news").insert(items);
+    if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+    return { content: [{ type: "text", text: `Added ${items.length} news item(s).` }] };
+  }
+);
+
+// Get news — optionally filter by topic or date
+server.tool(
+  "get_news",
+  {
+    topic_id: z.string().optional().describe("Filter by topic ID"),
+    date: z.string().optional().describe("Filter by date YYYY-MM-DD"),
+    limit: z.number().optional().describe("Max number of results, default 20"),
+  },
+  async ({ topic_id, date, limit = 20 }) => {
+    let query = supabase
+      .from("news")
+      .select("*, topics(name)")
+      .order("published_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (topic_id) query = query.eq("topic_id", topic_id);
+    if (date) query = query.eq("published_date", date);
+
+    const { data, error } = await query;
+    if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+
+    return {
+      content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+    };
+  }
+);
+
+// Delete a news item
+server.tool(
+  "delete_news",
+  { news_id: z.string().describe("The news item ID to delete") },
+  async ({ news_id }) => {
+    const { error } = await supabase.from("news").delete().eq("id", news_id);
+    if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+    return { content: [{ type: "text", text: `News item ${news_id} deleted.` }] };
+  }
+);
+
 const transport = new StdioServerTransport();
 await server.connect(transport);

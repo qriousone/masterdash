@@ -13,3 +13,15 @@ export type Topic = {
   created_at: string
   resources: Resource[]
 }
+
+export type NewsItem = {
+  id: string
+  topic_id: string | null
+  title: string
+  summary: string | null
+  url: string | null
+  source: string | null
+  published_date: string
+  created_at: string
+  topics: { name: string } | null
+}
