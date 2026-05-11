@@ -13,7 +13,7 @@ export default function Sidebar() {
   ]
 
   return (
-    <aside className="w-52 shrink-0 border-r border-zinc-800/50 flex flex-col h-full overflow-y-auto bg-[#0a0a0b]">
+    <aside className="w-52 shrink-0 border-r border-blue-900/20 flex flex-col h-full overflow-y-auto bg-[#0b0d14]">
 
       {/* Brand */}
       <div className="px-6 pt-7 pb-6">

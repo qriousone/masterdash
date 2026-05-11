@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function DateFilter() {
   const router = useRouter()
@@ -30,17 +30,15 @@ export default function DateFilter() {
       })
 
   return (
-    <div className="flex items-center gap-1">
-      <button
-        onClick={() => navigate(-1)}
-        className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
+    <div className="flex items-center gap-2">
+      <button onClick={() => navigate(-1)} className="text-zinc-700 hover:text-zinc-400 transition-colors">
+        <ChevronLeft className="w-3 h-3" />
       </button>
 
-      <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-colors">
-        <CalendarDays className="w-3.5 h-3.5 text-zinc-400" />
-        <span className="text-xs text-zinc-300 font-medium">{label}</span>
+      <label className="cursor-pointer relative">
+        <span className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors tracking-wide">
+          {label}
+        </span>
         <input
           type="date"
           value={selected}
@@ -53,17 +51,17 @@ export default function DateFilter() {
       <button
         onClick={() => navigate(1)}
         disabled={isToday}
-        className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="text-zinc-700 hover:text-zinc-400 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
       >
-        <ChevronRight className="w-4 h-4" />
+        <ChevronRight className="w-3 h-3" />
       </button>
 
       {!isToday && (
         <button
           onClick={() => router.push('/')}
-          className="ml-1 text-[10px] text-amber-500 hover:text-amber-400 font-medium"
+          className="text-[9px] text-zinc-700 hover:text-zinc-400 transition-colors"
         >
-          Back to today
+          Today
         </button>
       )}
     </div>

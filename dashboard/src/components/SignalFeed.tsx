@@ -130,15 +130,12 @@ export default function SignalFeed({ news, groupedNews, topics }: Props) {
   return (
     <>
       {/* Single card */}
-      <div className="aspect-square flex flex-col border border-zinc-800/50 rounded-xl bg-zinc-900/30 overflow-hidden">
+      <div className="aspect-square flex flex-col rounded-xl overflow-hidden border border-blue-900/20 bg-gradient-to-b from-[#161c2e]/70 to-[#0e1018]/60" style={{ boxShadow: "inset 0 1px 0 rgba(99,130,255,0.06)" }}>
         {/* Card header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-800/40">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
           <div>
             <p className="text-[9px] font-semibold tracking-[0.24em] text-zinc-500 uppercase mb-1">
               Signal Feed
-            </p>
-            <p className="text-[11px] text-zinc-600 tracking-wide">
-              Intelligence from tracked sources
             </p>
           </div>
           <Suspense fallback={null}>
@@ -152,20 +149,20 @@ export default function SignalFeed({ news, groupedNews, topics }: Props) {
             <p className="text-xs mt-1 text-zinc-800">Ask Claude to pull highlights from your sources.</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/40">
+          <div className="flex-1 overflow-y-auto divide-y divide-white/[0.04]">
             {Object.entries(groupedNews).map(([topicName, items]) => (
               <div key={topicName} className="px-6 py-5">
                 {/* Topic header */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="group/topic flex items-center gap-2 mb-4">
                   <p className="text-[9px] font-semibold tracking-[0.22em] text-zinc-400 uppercase">
                     {topicName}
                   </p>
                   <button
                     onClick={() => openEdit(topicName)}
-                    className="p-1 rounded text-zinc-700 hover:text-zinc-400 hover:bg-zinc-800/60 transition-colors"
+                    className="opacity-0 group-hover/topic:opacity-100 transition-opacity text-zinc-600 hover:text-zinc-300"
                     title="Edit topic & resources"
                   >
-                    <Pencil className="w-3 h-3" />
+                    <Pencil className="w-2.5 h-2.5" />
                   </button>
                 </div>
 
@@ -189,10 +186,7 @@ export default function SignalFeed({ news, groupedNews, topics }: Props) {
                         <p className="text-[13px] font-medium text-zinc-200 leading-snug">{item.title}</p>
                       )}
                       {item.summary && (
-                        <p className="text-[11px] text-zinc-600 mt-1.5 leading-relaxed">
-                          <span className="text-zinc-700">Why it matters — </span>
-                          {item.summary}
-                        </p>
+                        <p className="text-[11px] text-zinc-400 mt-1.5 leading-relaxed">{item.summary}</p>
                       )}
                       <div className="flex items-center gap-2 mt-2">
                         {item.source && (

@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geist.variable} ${playfair.variable} h-full antialiased`}>
-      <body className="h-full bg-[#0a0a0b] text-zinc-100 flex overflow-hidden" style={{ fontFamily: "var(--font-geist), sans-serif" }}>
+      <body className="h-full bg-[#0b0d14] text-zinc-100 flex overflow-hidden" style={{ fontFamily: "var(--font-geist), sans-serif" }}>
         <Sidebar />
         <main className="flex-1 overflow-y-auto">
           {children}

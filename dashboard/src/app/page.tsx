@@ -95,8 +95,10 @@ export default async function HomePage({
       {/* Main content */}
       <div className="p-10 space-y-8 flex-1">
 
-        {/* Signal Feed — single card, client component */}
-        <SignalFeed news={news} groupedNews={groupedNews} topics={topics} />
+        {/* Signal Feed — 1/3 width, square */}
+        <div className="w-1/3">
+          <SignalFeed news={news} groupedNews={groupedNews} topics={topics} />
+        </div>
 
 
       </div>
