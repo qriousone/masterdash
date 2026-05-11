@@ -76,7 +76,7 @@ export default async function HomePage({
               className="text-[2rem] leading-[1.15] font-bold text-white"
               style={{ fontFamily: "var(--font-playfair), Georgia, serif", fontStyle: "italic" }}
             >
-              Protect energy. Push leverage.<br />Build ownership.
+              Protect energy. Push leverage. Build ownership.
             </h1>
             <p className="text-zinc-500 mt-3 text-[13px] leading-relaxed tracking-wide">
               Focus on the few things that move everything forward.

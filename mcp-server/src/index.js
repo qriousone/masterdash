@@ -28,6 +28,12 @@ Apply these rules every time you research and populate news:
 3. Apply freshness rules — drop any topic with nothing new.
 4. Call \`add_news_batch\` with all qualifying items in one shot.
 5. Default date is today unless the user specifies otherwise.
+6. After adding news, run a resource optimization pass:
+   - Resources without URLs are research direction labels — they tell you what to look for within a topic. Do NOT suggest removing them just because they lack a URL.
+   - Only suggest removing a resource if it is: a broken URL, fully duplicated by a better source already in the list, or genuinely outdated/irrelevant to the topic.
+   - Suggest adding new URL-based sources when a topic lacks coverage or when a specific publication proved highly useful during this research run.
+   - Call \`add_optimizations_batch\` with your suggestions.
+   - Be specific in the reason field — explain exactly why you're recommending the change based on what you observed during research.
   `.trim(),
 });
 
@@ -210,6 +216,51 @@ server.tool(
     return {
       content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
     };
+  }
+);
+
+// Add resource optimization suggestions in bulk
+server.tool(
+  "add_optimizations_batch",
+  {
+    items: z.array(z.object({
+      type: z.enum(["add", "remove"]).describe("'add' to suggest a new resource, 'remove' to suggest removing one"),
+      topic_id: z.string().describe("The topic this suggestion applies to"),
+      resource_id: z.string().optional().describe("Required for 'remove' — the resource ID to remove"),
+      title: z.string().describe("Resource title"),
+      url: z.string().url().optional().describe("URL (required for 'add' suggestions)"),
+      reason: z.string().describe("Why this resource should be added or removed"),
+    })).describe("List of optimization suggestions"),
+  },
+  async ({ items }) => {
+    const { error } = await supabase.from("resource_optimizations").insert(items);
+    if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+    return { content: [{ type: "text", text: `Added ${items.length} optimization suggestion(s).` }] };
+  }
+);
+
+// Get all pending optimization suggestions
+server.tool(
+  "get_optimizations",
+  {},
+  async () => {
+    const { data, error } = await supabase
+      .from("resource_optimizations")
+      .select("*, topics(name), resources(title)")
+      .order("created_at", { ascending: false });
+    if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+    return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// Dismiss an optimization suggestion
+server.tool(
+  "dismiss_optimization",
+  { optimization_id: z.string().describe("The optimization ID to dismiss") },
+  async ({ optimization_id }) => {
+    const { error } = await supabase.from("resource_optimizations").delete().eq("id", optimization_id);
+    if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
+    return { content: [{ type: "text", text: `Optimization ${optimization_id} dismissed.` }] };
   }
 );
 

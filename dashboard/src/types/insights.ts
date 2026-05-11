@@ -14,6 +14,19 @@ export type Topic = {
   resources: Resource[]
 }
 
+export type Optimization = {
+  id: string
+  type: 'add' | 'remove'
+  topic_id: string
+  resource_id: string | null
+  title: string
+  url: string | null
+  reason: string | null
+  created_at: string
+  topics: { name: string } | null
+  resources: { title: string } | null
+}
+
 export type NewsItem = {
   id: string
   topic_id: string | null
