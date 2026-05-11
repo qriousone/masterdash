@@ -7,6 +7,9 @@
     "start": "node src/index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.105.4",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
   }
 }
